@@ -1,11 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { verifyToken, JWTPayload } from '../utils/jwt';
+import { unauthorizedResponse } from '../utils/responses';
 
 export interface AuthRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-  };
+  user?: JWTPayload;
 }
 
 export function authenticate(
@@ -15,18 +13,40 @@ export function authenticate(
 ) {
   const authHeader = req.headers.authorization;
   
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No token provided' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return unauthorizedResponse(res, 'No token provided');
   }
   
   const token = authHeader.split(' ')[1];
   
   try {
-    const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
-    (req as AuthRequest).user = decoded;
+    const payload = verifyToken(token);
+    (req as AuthRequest).user = payload;
     next();
-  } catch {
-    return res.status(401).json({ error: 'Invalid token' });
+  } catch (error) {
+    return unauthorizedResponse(res, 'Invalid token');
   }
+}
+
+export function requireRole(...roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const authReq = req as AuthRequest;
+    
+    if (!authReq.user) {
+      return unauthorizedResponse(res);
+    }
+    
+    if (!roles.includes(authReq.user.role)) {
+      return forbiddenResponse(res, 'Insufficient permissions');
+    }
+    
+    next();
+  };
+}
+
+function forbiddenResponse(res: Response, message: string = 'Forbidden') {
+  return res.status(403).json({
+    success: false,
+    error: message,
+  });
 }

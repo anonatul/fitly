@@ -24,8 +24,9 @@ describe('Auth API', () => {
         });
       
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('token');
-      expect(response.body.user.email).toBe('test@example.com');
+      expect(response.body).toHaveProperty('success');
+      expect(response.body.data).toHaveProperty('token');
+      expect(response.body.data.user.email).toBe('test@example.com');
     });
 
     it('should return 400 for duplicate email', async () => {
@@ -59,7 +60,7 @@ describe('Auth API', () => {
         });
       
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('token');
+      expect(response.body.data).toHaveProperty('token');
     });
 
     it('should return 401 for wrong password', async () => {
