@@ -1,0 +1,48 @@
+# Node.js
+node_modules/
+dist/
+build/
+npm-debug.log
+yarn-error.log
+.npm
+*.tgz
+.pnp
+.pnp.js
+
+# Kotlin/Java/Gradle
+.gradle/
+build/
+.idea/
+*.iml
+*.jar
+*.class
+*.ktc
+out/
+*.log
+gradle-app.setting
+!gradle-wrapper.jar
+gradle-wrapper.properties
+.gradle
+local.properties
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.env
+.env.local
+
+# OS
+Thumbs.db
+.DS_Store
+*.log
+
+# Misc
+.cache/
+dist/
+coverage/
+
+docs/.worktrees/
