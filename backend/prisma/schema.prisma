@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  TRAINER
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum WorkoutStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  password          String?
+  name              String
+  role              UserRole  @default(USER)
+  gender            Gender?
+  dateOfBirth       DateTime?
+  height            Float?
+  weight            Float?
+  goalWeight        Float?
+  avatarUrl         String?
+  bio               String?
+
+  // Social
+  followers         Follow[]  @relation("following")
+  following        Follow[]  @relation("follower")
+
+  // Authentication
+  googleId          String?   @unique
+  appleId           String?  @unique
+  refreshToken     String?
+
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  workouts         Workout[]
+  exerciseLogs     ExerciseLog[]
+  nutritionLogs    NutritionLog[]
+  bodyMetrics     BodyMetric[]
+  aiCoachChats    AICoachChat[]
+}
+
+model Exercise {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  muscleGroup String
+  equipment   String[]
+  videoUrl    String?
+  imageUrl    String?
+  caloriesPerMinute Float?
+
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  exerciseLogs ExerciseLog[]
+  workoutExercises WorkoutExercise[]
+}
+
+model Workout {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  status      WorkoutStatus @default(SCHEDULED)
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  duration    Int?          // minutes
+
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  exercises   WorkoutExercise[]
+  exerciseLogs ExerciseLog[]
+}
+
+model WorkoutExercise {
+  id          String  @id @default(uuid())
+  workoutId  String
+  exerciseId  String
+  workout     Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise    Exercise @relation(fields: [exerciseId], references: [id])
+
+  sets        Int
+  reps        Int?
+  duration   Int?    // seconds
+  weight      Float?
+  restTime   Int?    // seconds between sets
+
+  order       Int
+
+  @@unique([workoutId, exerciseId])
+}
+
+model ExerciseLog {
+  id              String    @id @default(uuid())
+  workoutId       String?
+  workout         Workout?  @relation(fields: [workoutId], references: [id])
+  exerciseId      String
+  exercise        Exercise  @relation(fields: [exerciseId], references: [id])
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  setsCompleted   Int
+  repsCompleted  Int?
+  duration       Int?
+  weightUsed     Float?
+  caloriesBurned Float?
+
+  completedAt    DateTime  @default(now())
+}
+
+model NutritionLog {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mealType      MealType
+  name         String
+  description  String?
+  calories     Float
+  protein      Float?
+  carbs        Float?
+  fat          Float?
+  fiber        Float?
+  sugar        Float?
+  sodium       Float?
+  waterIntake  Float?    // in ml
+
+  loggedAt     DateTime  @default(now())
+}
+
+model BodyMetric {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  weight      Float?
+  bodyFat     Float?
+  muscleMass  Float?
+  waist       Float?
+  chest      Float?
+  hips       Float?
+  arms       Float?
+  thighs    Float?
+
+  measuredAt  DateTime  @default(now())
+}
+
+model AICoachChat {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messages    Json      // Array of {role: "user" | "assistant", content: string, timestamp: string}
+  tokensUsed Int        @default(0)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Follow {
+  id          String    @id @default(uuid())
+  followerId String
+  follower   User      @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User      @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([followerId, followingId])
+}
