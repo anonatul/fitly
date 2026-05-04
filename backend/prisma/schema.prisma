@@ -48,6 +48,16 @@ model User {
   avatarUrl         String?
   bio               String?
 
+  // Onboarding
+  onboardingComplete Boolean @default(false)
+  workoutProgramId    String?
+  workoutProgram      Json?
+  activityLevel       String?
+  waterIntake         Float?
+  goal                String?
+  daysPerWeek        Int?
+  age                 Int?
+
   // Social
   followers         Follow[]  @relation("following")
   following        Follow[]  @relation("follower")
